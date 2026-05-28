@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd ..
+
 cd ../order-service
 mvn clean install -Dmaven.test.skip=true
  

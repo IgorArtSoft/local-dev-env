@@ -1,8 +1,10 @@
 #!/bin/bash
 
 cd ../local-dev-env
+cd scripts
 docker compose down
 docker compose up -d
+cd ..
 
 echo ""
 echo "              Kafka: http://localhost:9092"

@@ -1,5 +1,10 @@
 # Microservices Demo: Order Processing with Kafka and MongoDB
 
+Run demo:
+cd local-dev-env/scripts
+- mac/linux% start.sh
+-    windows> start.ps1
+
 ## Overview
 
 This demo project presents a simple event-driven microservices architecture using **Spring Boot**, **RESTful API**, **Kafka**, **MongoDB**, and **Docker**.
