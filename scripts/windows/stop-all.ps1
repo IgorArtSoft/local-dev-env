@@ -91,7 +91,7 @@ function Stop-ServiceProcessesByCommandLine {
     $candidateProcesses = Get-CimInstance Win32_Process |
         Where-Object {
             $_.CommandLine -and (
-                $_.Name -match "java|mvn|mvnw|cmd|powershell"
+                $_.Name -match "java|mvn|mvnw|cmd"
             )
         }
 

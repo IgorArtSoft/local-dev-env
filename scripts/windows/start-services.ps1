@@ -69,15 +69,30 @@ function New-ServiceTabCommand {
         [string]$RunCommand
     )
 
+    $escapedServiceName = $ServiceName.Replace("'", "''")
+    $escapedServiceDir = $ServiceDir.Replace("'", "''")
+
     return @"
-`$Host.UI.RawUI.WindowTitle = '$ServiceName'
+`$ErrorActionPreference = 'Stop'
+`$Host.UI.RawUI.WindowTitle = '$escapedServiceName'
 `$Host.UI.RawUI.ForegroundColor = '$ConsoleColor'
+
 Clear-Host
-Write-Host 'Starting $ServiceName...' -ForegroundColor $ConsoleColor
-Write-Host 'Directory: $ServiceDir' -ForegroundColor $ConsoleColor
+
+Write-Host 'Starting $escapedServiceName...' -ForegroundColor $ConsoleColor
+Write-Host 'Directory: $escapedServiceDir' -ForegroundColor $ConsoleColor
 Write-Host ''
-Set-Location -LiteralPath '$ServiceDir'
+
+Set-Location -LiteralPath '$escapedServiceDir'
+
 $RunCommand
+
+`$exitCode = `$LASTEXITCODE
+
+Write-Host ''
+Write-Host '$escapedServiceName stopped. Closing tab...' -ForegroundColor Yellow
+
+exit `$exitCode
 "@
 }
 
@@ -109,14 +124,18 @@ foreach ($service in $Services) {
         $wtArgs += ";"
     }
 
-    $wtArgs += @(
-        "new-tab",
-        "--title", $service.Name,
-        "--suppressApplicationTitle",
-        "powershell.exe",
-        "-NoExit",
-        "-Command", $tabCommand
-    )
+	$wtArgs += @(
+	    "new-tab",
+	    "--title",
+	    $service.Name,
+	    "--suppressApplicationTitle",
+	    "powershell.exe",
+	    "-NoProfile",
+	    "-ExecutionPolicy",
+	    "Bypass",
+	    "-Command",
+	    $tabCommand
+	)
 
     $first = $false
 }

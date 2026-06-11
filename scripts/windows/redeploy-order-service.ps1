@@ -89,12 +89,33 @@ try {
     Write-Host "Starting $ServiceName from jar:" -ForegroundColor Green
     Write-Host $jar.FullName -ForegroundColor Gray
 
-    Start-Process powershell -ArgumentList @(
-        "-NoExit",
-        "-Command",
-        "cd '$ProjectDir'; java -jar '$($jar.FullName)'"
-    )
-
+	$escapedProjectDir = $ProjectDir.Replace("'", "''")
+	$escapedJarPath = $jar.FullName.Replace("'", "''")
+	
+	$runCommand = @"
+	`$ErrorActionPreference = 'Stop'
+	`$Host.UI.RawUI.WindowTitle = '$ServiceName'
+	
+	Set-Location -LiteralPath '$escapedProjectDir'
+	
+	java -jar '$escapedJarPath'
+	
+	`$exitCode = `$LASTEXITCODE
+	
+	Write-Host ''
+	Write-Host '$ServiceName stopped. Closing window...' -ForegroundColor Yellow
+	
+	exit `$exitCode
+	"@
+	
+	Start-Process powershell.exe -ArgumentList @(
+	    "-NoProfile",
+	    "-ExecutionPolicy",
+	    "Bypass",
+	    "-Command",
+	    $runCommand
+	)
+	
     Write-Host "$ServiceName redeploy command completed." -ForegroundColor Green
 }
 finally {
