@@ -77,13 +77,13 @@ MongoDB is started together with Kafka and Kafka UI by the infrastructure script
 From the infrastructure repository root:
 
 ```powershell
-.\scripts\windows\host-services\start-infra.ps1
+.\scripts\windows\start-infra.ps1
 ```
 
 Or through the full local startup script:
 
 ```powershell
-.\scripts\windows\host-services\start-all.ps1
+.\scripts\windows\start-all.ps1
 ```
 
 Compatibility wrapper:
@@ -99,7 +99,7 @@ Compatibility wrapper:
 To stop the local infrastructure containers:
 
 ```powershell
-.\scripts\windows\host-services\stop-all.ps1
+.\scripts\windows\stop-all.ps1
 ```
 
 This stops Kafka, Kafka UI, MongoDB, and local Spring Boot services.
@@ -444,7 +444,7 @@ Use this only when old local data is not needed.
 ### Step 1: Stop local environment
 
 ```powershell
-.\scripts\windows\host-services\stop-all.ps1
+.\scripts\windows\stop-all.ps1
 ```
 
 ### Step 2: Find MongoDB Docker volume
@@ -471,7 +471,7 @@ if ($mongoVolume) {
 ### Step 5: Start infrastructure again
 
 ```powershell
-.\scripts\windows\host-services\start-infra.ps1
+.\scripts\windows\start-infra.ps1
 ```
 
 At this point MongoDB is fresh.
@@ -528,7 +528,7 @@ db.payments.getIndexes()
 After starting services and creating one test order:
 
 ```powershell
-.\scripts\windows\host-services\test-order.ps1
+.\scripts\windows\test-order.ps1
 ```
 
 Connect to MongoDB:
@@ -582,7 +582,7 @@ docker rm -f mongodb
 Then start infrastructure again:
 
 ```powershell
-.\scripts\windows\host-services\start-infra.ps1
+.\scripts\windows\start-infra.ps1
 ```
 
 If Kafka or Kafka UI have the same issue:
@@ -594,7 +594,7 @@ docker rm -f kafka kafka-ui
 Then restart:
 
 ```powershell
-.\scripts\windows\host-services\start-infra.ps1
+.\scripts\windows\start-infra.ps1
 ```
 
 ---

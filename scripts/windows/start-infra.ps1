@@ -2,8 +2,30 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $ScriptDir = $PSScriptRoot
-$RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..\..")).Path
-$ComposeInfraFile = Join-Path $RepoRoot "compose\docker-compose.infra.yml"
+
+function Find-InfrastructureRoot {
+    param (
+        [string]$StartDirectory
+    )
+
+    $currentDirectory = (Resolve-Path $StartDirectory).Path
+
+    while ($true) {
+        $candidateComposeFile = Join-Path $currentDirectory "compose\docker-compose.infra.yml"
+
+        if (Test-Path $candidateComposeFile) {
+            return $currentDirectory
+        }
+
+        $parentDirectory = Split-Path -Parent $currentDirectory
+
+        if ([string]::IsNullOrWhiteSpace($parentDirectory) -or $parentDirectory -eq $currentDirectory) {
+            throw "Could not find infrastructure root. Expected compose\docker-compose.infra.yml above: $StartDirectory"
+        }
+
+        $currentDirectory = $parentDirectory
+    }
+}
 
 function Invoke-NativeCommand {
     param (
@@ -19,6 +41,9 @@ function Invoke-NativeCommand {
     }
 }
 
+$InfrastructureRoot = Find-InfrastructureRoot -StartDirectory $ScriptDir
+$ComposeInfraFile = Join-Path $InfrastructureRoot "compose\docker-compose.infra.yml"
+
 if (!(Test-Path $ComposeInfraFile)) {
     throw "Compose file was not found: $ComposeInfraFile"
 }
@@ -30,6 +55,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Docker is not available. Start Docker Desktop first."
 }
 
+Write-Host "Infrastructure root: $InfrastructureRoot" -ForegroundColor DarkGray
 Write-Host "Using Compose file: $ComposeInfraFile" -ForegroundColor DarkGray
 
 Invoke-NativeCommand "Starting Kafka, Kafka UI, and MongoDB..." {

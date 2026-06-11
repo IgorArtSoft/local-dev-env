@@ -1,9 +1,36 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+function Find-InfrastructureRoot {
+    param (
+        [string]$StartDirectory
+    )
+
+    $currentDirectory = Resolve-Path $StartDirectory
+
+    while ($true) {
+        $candidateComposeFile = Join-Path $currentDirectory "compose\docker-compose.infra.yml"
+
+        if (Test-Path $candidateComposeFile) {
+            return $currentDirectory.Path
+        }
+
+        $parentDirectory = Split-Path -Parent $currentDirectory
+
+        if ($parentDirectory -eq $currentDirectory.Path -or [string]::IsNullOrWhiteSpace($parentDirectory)) {
+            throw "Could not find infrastructure repository root. Expected compose\docker-compose.infra.yml above $StartDirectory."
+        }
+
+        $currentDirectory = Resolve-Path $parentDirectory
+    }
+}
+
 $ScriptDir = $PSScriptRoot
-$InfrastructureRoot = (Resolve-Path (Join-Path $ScriptDir "..\..\..")).Path
+$InfrastructureRoot = Find-InfrastructureRoot -StartDirectory $ScriptDir
 $WorkspaceRoot = (Resolve-Path (Join-Path $InfrastructureRoot "..")).Path
+
+Write-Host "Infrastructure root: $InfrastructureRoot" -ForegroundColor DarkGray
+Write-Host "Workspace root:      $WorkspaceRoot" -ForegroundColor DarkGray
 
 $Services = @(
     @{
@@ -18,13 +45,6 @@ $Services = @(
         Port = 8082
         Color = "Blue"
     }
-    # Later:
-    # @{
-    #     Name = "customer-service"
-    #     Directory = Join-Path $WorkspaceRoot "customer-service"
-    #     Port = 8083
-    #     Color = "Magenta"
-    # }
 )
 
 function Get-ServiceRunCommand {
@@ -61,28 +81,24 @@ $RunCommand
 "@
 }
 
-if (!(Get-Command wt.exe -ErrorAction SilentlyContinue)) {
-    throw "Windows Terminal command 'wt.exe' was not found. Install or enable Windows Terminal."
-}
-
-if ([string]::IsNullOrWhiteSpace($env:WT_SESSION)) {
-    throw "This script should be run from Windows Terminal. Open Windows Terminal from the infrastructure repository and run .\scripts\start-all.ps1 again."
-}
-
 foreach ($service in $Services) {
     if (!(Test-Path $service.Directory)) {
         throw "$($service.Name) folder was not found: $($service.Directory)"
     }
 }
 
-Write-Host "Starting microservices in new tabs of the current Windows Terminal window..." -ForegroundColor Cyan
+if (!(Get-Command wt.exe -ErrorAction SilentlyContinue)) {
+    throw "Windows Terminal command 'wt.exe' was not found. Install or enable Windows Terminal."
+}
+
+Write-Host "Starting microservices in new Windows Terminal tabs..." -ForegroundColor Cyan
 
 $wtArgs = @("-w", "0")
-
 $first = $true
 
 foreach ($service in $Services) {
     $runCommand = Get-ServiceRunCommand -ServiceDir $service.Directory
+
     $tabCommand = New-ServiceTabCommand `
         -ServiceName $service.Name `
         -ServiceDir $service.Directory `
@@ -108,11 +124,11 @@ foreach ($service in $Services) {
 & wt.exe @wtArgs
 
 if ($LASTEXITCODE -ne 0) {
-    throw "Failed to start service tabs in Windows Terminal."
+    throw "Failed to start microservice tabs in Windows Terminal."
 }
 
 Write-Host ""
-Write-Host "Microservices are starting in new Windows Terminal tabs." -ForegroundColor Green
+Write-Host "Microservice startup commands were sent to Windows Terminal." -ForegroundColor Green
 
 foreach ($service in $Services) {
     Write-Host "$($service.Name): http://localhost:$($service.Port)" -ForegroundColor $service.Color
